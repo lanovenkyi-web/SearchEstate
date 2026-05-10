@@ -88,7 +88,6 @@ TEMPLATES = [
 
 
 
-# Пример автоматического переключения
 USE_SQLITE = env.bool('USE_SQLITE', default=True)
 
 if USE_SQLITE:
