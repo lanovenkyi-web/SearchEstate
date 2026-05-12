@@ -2,15 +2,11 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.exceptions import ValidationError
 
-
 # OopCompanion:suppressRename
 USER_MODEL = get_user_model()
 
 
-
-
 class Booking(models.Model):
-
     STATUS_CHOICES = (
         ('new', 'Новое'),
         ('confirmed', 'Подтверждено'),
@@ -37,9 +33,24 @@ class Booking(models.Model):
     )
 
     def clean(self):
-        # Проверка, что дата окончания не раньше даты начала
+
         if self.end_date < self.start_date:
-            raise ValidationError('End date cannot be earlier than start date')
+            raise ValidationError('Дата окончания не может быть раньше даты начала')
+
+        if self.listing_id:
+            overlapping_bookings = Booking.objects.filter(
+                listing=self.listing,
+                status__in=['new', 'confirmed'],
+                start_date__lte=self.end_date,
+                end_date__gte=self.start_date
+            ).exclude(pk=self.pk)
+
+            if overlapping_bookings.exists():
+                raise ValidationError('Даты бронирования пересекаются с существующим бронированием')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.listing} ({self.start_date} - {self.end_date})"
