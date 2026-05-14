@@ -4,11 +4,13 @@ from . import views
 urlpatterns = [
     # Основные CRUD операции
     path('', views.BookingListCreateView.as_view(), name='booking-list-create'),
-    path('<int:pk>/', views.BookingDetailView.as_view(), name='booking-detail'),
 
     # Персональные бронирования
     path('my/', views.my_bookings_view, name='my-bookings'),
     path('owner/', views.owner_bookings_view, name='owner-bookings'),
+
+    # Детальное бронирование
+    path('<int:pk>/', views.BookingDetailView.as_view(), name='booking-detail'),
 
     # Управление статусами
     path('<int:pk>/confirm/', views.confirm_booking_view, name='confirm-booking'),

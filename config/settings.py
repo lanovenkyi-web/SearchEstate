@@ -201,4 +201,5 @@ SPECTACULAR_SETTINGS = {
             ('canceled', 'Отменено'),
         ],
     },
+    'SCHEMA_PATH_PREFIX': '/api/',
 }
