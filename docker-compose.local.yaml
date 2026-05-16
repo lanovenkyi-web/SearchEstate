@@ -29,7 +29,7 @@ services:
 
     volumes:
       - app_logs:/app/logs
-      - app_avatars:/app/avatars
+
 
     depends_on:
       database:
@@ -72,7 +72,6 @@ services:
 volumes:
   mysql_data:
   app_logs:
-  app_media:
   app_staticfiles:
 
 networks:
