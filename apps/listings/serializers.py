@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Estate, Listing
+from .models import Estate, Listing, SearchHistory, ViewHistory
 
 
 # OopCompanion:suppressRename
@@ -116,3 +116,21 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
             instance.estate.save()
 
         return super().update(instance, validated_data)
+
+
+class SearchHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SearchHistory
+        fields = ['id', 'query', 'search_count', 'last_searched_at', 'created_at']
+        read_only_fields = ['id', 'search_count', 'last_searched_at', 'created_at']
+
+
+
+class ViewHistorySerializer(serializers.ModelSerializer):
+    listing_title = serializers.CharField(source='listing.estate.title', read_only=True)
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+
+    class Meta:
+        model = ViewHistory
+        fields = ['id', 'listing', 'listing_title', 'user', 'user_email', 'viewed_at']
+        read_only_fields = ['id', 'viewed_at']

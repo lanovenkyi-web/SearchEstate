@@ -6,10 +6,10 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
-from .models import Listing
+from .models import Listing, SearchHistory, ViewHistory
 from .serializers import (
     ListingSerializer, ListingCreateSerializer, ListingListSerializer,
-    ListingUpdateSerializer
+    ListingUpdateSerializer, SearchHistorySerializer, ViewHistorySerializer
 )
 from .filters import ListingFilter
 
@@ -97,6 +97,17 @@ class ListingDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         instance.views_count += 1
         instance.save(update_fields=['views_count'])
+
+        if request.user.is_authenticated:
+            ViewHistory.objects.create(
+                listing=instance,
+                user=request.user
+            )
+        else:
+            ViewHistory.objects.create(
+                listing=instance,
+                user=None
+            )
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
@@ -207,6 +218,26 @@ def search_listings_view(request):
         listings_query = listings_query.filter(status=Listing.Status.ACTIVE)
 
     serializer = ListingListSerializer(listings_query, many=True)
+
+    # Сохраняем историю поиска
+    if request.user.is_authenticated:
+        search_history, created = SearchHistory.objects.get_or_create(
+            user=request.user,
+            query=query
+        )
+        if not created:
+            search_history.search_count += 1
+            search_history.save()
+    else:
+        # Для анонимных пользователей сохраняем без привязки к пользователю
+        search_history, created = SearchHistory.objects.get_or_create(
+            user=None,
+            query=query
+        )
+        if not created:
+            search_history.search_count += 1
+            search_history.save()
+
     return Response({
         'found_count': listings_query.count(),
         'results': serializer.data
@@ -224,3 +255,40 @@ def popular_listings_view(request):
     serializer = ListingListSerializer(listings, many=True)
     return Response(serializer.data)
 
+
+@extend_schema(responses=SearchHistorySerializer(many=True))
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def popular_searches_view(request):
+    limit = request.query_params.get('limit', 10)
+    searches = SearchHistory.objects.all()[:int(limit)]
+    serializer = SearchHistorySerializer(searches, many=True)
+    return Response(serializer.data)
+
+
+@extend_schema(responses=ViewHistorySerializer(many=True))
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def my_view_history_view(request):
+    view_histories = ViewHistory.objects.filter(
+        user=request.user
+    ).select_related('listing', 'listing__estate')
+    serializer = ViewHistorySerializer(view_histories, many=True)
+    return Response(serializer.data)
+
+
+@extend_schema(responses=ViewHistorySerializer(many=True))
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def listing_view_history_view(request, pk):
+    if not request.user.is_landlord() and not request.user.is_staff:
+        return Response(
+            {'error': 'У вас нет прав для просмотра истории'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    view_histories = ViewHistory.objects.filter(
+        listing_id=pk
+    ).select_related('user', 'listing', 'listing__estate')
+    serializer = ViewHistorySerializer(view_histories, many=True)
+    return Response(serializer.data)

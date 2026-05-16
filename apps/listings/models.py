@@ -89,3 +89,47 @@ class Listing(models.Model):
     def __str__(self):
         return f"Объявление: {self.estate.title} [{self.get_status_display()}]"
 
+class SearchHistory(models.Model):
+    user = models.ForeignKey(
+        USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='search_histories',
+        null=True,
+        blank=True
+    )
+    query = models.CharField(max_length=255)
+    search_count = models.IntegerField(default=1)
+    last_searched_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "История поиска"
+        verbose_name_plural = "Истории поиска"
+        ordering = ['-search_count', '-last_searched_at']
+
+    def __str__(self):
+        return f"{self.query} ({self.search_count})"
+
+class ViewHistory(models.Model):
+    listing = models.ForeignKey(
+        Listing,
+        on_delete=models.CASCADE,
+        related_name='view_histories'
+    )
+    user = models.ForeignKey(
+        USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='view_histories',
+        null=True,
+        blank=True
+    )
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "История просмотров"
+        verbose_name_plural = "Истории просмотров"
+        ordering = ['-viewed_at']
+
+    def __str__(self):
+        return f"{self.user} viewed {self.listing}"
+
