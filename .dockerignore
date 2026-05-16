@@ -8,6 +8,7 @@ __pycache__/
 *.pyo
 *.pyd
 db.sqlite3
+*.db
+**/*.pem
 .env
-Dockerfile
-docker-compose.yaml
+docker-compose.local.yaml

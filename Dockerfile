@@ -47,7 +47,7 @@ COPY --chown=app:app manage.py ./manage.py
 COPY --chown=app:app config ./config
 COPY --chown=app:app apps ./apps
 COPY --chown=app:app templates ./templates
-COPY --chown=app:app static ./static
+COPY --chown=app:app staticfiles ./staticfiles
 
 USER app
 
