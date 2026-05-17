@@ -5,6 +5,11 @@ from .models import Estate, Listing
 # OopCompanion:suppressRename
 
 class ListingFilter(django_filters.FilterSet):
+    """Filter for listings.
+    
+    Allows filtering listings by price, number of rooms,
+    housing type, location, status, owner, and creation date.
+    """
     min_price = django_filters.NumberFilter(field_name='estate__price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='estate__price', lookup_expr='lte')
     min_rooms = django_filters.NumberFilter(field_name='estate__rooms', lookup_expr='gte')

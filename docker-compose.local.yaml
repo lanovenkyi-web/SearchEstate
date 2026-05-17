@@ -25,9 +25,11 @@ services:
       DB_PORT: "3306"
 
     ports:
+
       - "8000:8000"
 
     volumes:
+      - .:/app
       - app_logs:/app/logs
 
 

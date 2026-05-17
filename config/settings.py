@@ -21,7 +21,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env.read_env(BASE_DIR / '.env')
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -31,10 +30,6 @@ SECRET_KEY = env.str('SECRET_KEY', default='django-insecure-local-dev-key-change
 DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', 'testserver'])
-
-
-
-
 
 # Application definition
 
@@ -85,12 +80,8 @@ TEMPLATES = [
     },
 ]
 
-
-
-
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 
 
 USE_SQLITE = env.bool('USE_SQLITE', default=True)
@@ -114,8 +105,6 @@ else:
         }
     }
 
-
-
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
@@ -134,7 +123,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
@@ -145,7 +133,6 @@ TIME_ZONE = 'Europe/Berlin'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
@@ -186,7 +173,7 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API для поиска недвижимости',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    # Это добавит кнопку Authorize для твоих токенов
+
     'COMPONENT_SPLIT_PATCH': True,
     'ENUM_NAME_OVERRIDES': {
         'ListingStatus': [

@@ -7,6 +7,11 @@ USER_MODEL = get_user_model()
 
 
 class Booking(models.Model):
+    """Real estate booking model.
+    
+    Links a tenant with a listing for a specific period.
+    Supports statuses: new, confirmed, rejected, canceled.
+    """
     STATUS_CHOICES = (
         ('new', 'Новое'),
         ('confirmed', 'Подтверждено'),
@@ -33,7 +38,14 @@ class Booking(models.Model):
     )
 
     def clean(self):
-
+        """Validates the booking.
+        
+        Checks that the end date is after the start date
+        and that dates do not overlap with existing bookings.
+        
+        Raises:
+            ValidationError: If dates are invalid or overlap
+        """
         if self.end_date < self.start_date:
             raise ValidationError('Дата окончания не может быть раньше даты начала')
 
@@ -49,6 +61,8 @@ class Booking(models.Model):
                 raise ValidationError('Даты бронирования пересекаются с существующим бронированием')
 
     def save(self, *args, **kwargs):
+        # Saves the booking with validation.
+
         self.full_clean()
         super().save(*args, **kwargs)
 

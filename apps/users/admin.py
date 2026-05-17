@@ -16,9 +16,9 @@ class UserAdmin(BaseUserAdmin):
 
     fieldsets = (
         (None, {'fields': ('email', 'name')}),
-        ('Личная информация', {'fields': ('role', 'phone_number', 'bio')}),
-        ('Права доступа', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Важные даты', {'fields': ('last_login', 'date_joined')}),
+        ('Personal information', {'fields': ('role', 'phone_number', 'bio')}),
+        ('Access rights', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
 
     add_fieldsets = (
@@ -31,14 +31,14 @@ class UserAdmin(BaseUserAdmin):
     def get_role_display(self, obj):
         return obj.get_role_display()
 
-    get_role_display.short_description = 'Роль'
+    get_role_display.short_description = 'Role'
 
     def save_model(self, request, obj, form, change):
         if not change:
-            # При создании нового пользователя используем менеджер
+            # When creating a new user, use the manager
             obj.set_password(form.cleaned_data['password1'])
         else:
-            # При обновлении пароля
+            # When updating password
             if 'password1' in form.cleaned_data and form.cleaned_data['password1']:
                 obj.set_password(form.cleaned_data['password1'])
         super().save_model(request, obj, form, change)

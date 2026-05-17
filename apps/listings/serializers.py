@@ -6,6 +6,11 @@ from .models import Estate, Listing, SearchHistory, ViewHistory
 
 
 class ListingBaseSerializer(serializers.ModelSerializer):
+    """Base serializer for listings.
+    
+    Contains common fields for all listing serializers.
+    Includes data from the related Estate model.
+    """
     title = serializers.CharField(source='estate.title', read_only=True)
     description = serializers.CharField(source='estate.description', read_only=True)
     city = serializers.CharField(source='estate.city', read_only=True)
@@ -19,6 +24,8 @@ class ListingBaseSerializer(serializers.ModelSerializer):
 
 
 class ListingSerializer(ListingBaseSerializer):
+    """Full serializer for detailed listing view."""
+
     class Meta:
         model = Listing
         fields = [
@@ -31,6 +38,11 @@ class ListingSerializer(ListingBaseSerializer):
 
 
 class ListingListSerializer(ListingBaseSerializer):
+    """Serializer for listing list view.
+    
+    Contains main fields for display in list.
+    """
+
     class Meta:
         model = Listing
         fields = [
@@ -41,6 +53,11 @@ class ListingListSerializer(ListingBaseSerializer):
 
 
 class ListingCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating a new listing.
+    
+    Creates an Estate object and a related Listing.
+    Available only for landlords and administrators.
+    """
     title = serializers.CharField(max_length=255)
     description = serializers.CharField()
     price = serializers.DecimalField(max_digits=12, decimal_places=2)
@@ -54,6 +71,7 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         fields = ['title', 'description', 'price', 'rooms', 'housing_type', 'city', 'district']
 
     def validate(self, attrs):
+
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             if not request.user.is_staff and not request.user.is_landlord():
@@ -61,22 +79,30 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_price(self, value):
+
         if value <= 0:
             raise serializers.ValidationError("Цена должна быть положительной")
         return value
 
     def validate_rooms(self, value):
+
         if value < 1 or value > 50:
             raise serializers.ValidationError("Количество комнат должно быть от 1 до 50")
         return value
 
     def create(self, validated_data):
+
         request = self.context.get('request')
         estate = Estate.objects.create(owner=request.user, **validated_data)
         return Listing.objects.create(estate=estate, status=Listing.Status.ACTIVE)
 
 
 class ListingUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating a listing.
+    
+    Allows updating both Listing fields and related Estate fields.
+    Available only for landlords and administrators.
+    """
     title = serializers.CharField(max_length=255, required=False)
     description = serializers.CharField(required=False)
     price = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
@@ -90,6 +116,7 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
         fields = ['status', 'title', 'description', 'price', 'rooms', 'housing_type', 'city', 'district']
 
     def validate(self, attrs):
+
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             if not request.user.is_staff and not request.user.is_landlord():
@@ -97,16 +124,19 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_price(self, value):
+
         if value <= 0:
             raise serializers.ValidationError("Цена должна быть положительной")
         return value
 
     def validate_rooms(self, value):
+
         if value < 1 or value > 50:
             raise serializers.ValidationError("Количество комнат должно быть от 1 до 50")
         return value
 
     def update(self, instance, validated_data):
+
         estate_fields = ['title', 'description', 'price', 'rooms', 'housing_type', 'city', 'district']
         estate_data = {field: validated_data.pop(field) for field in estate_fields if field in validated_data}
 
@@ -119,14 +149,16 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
 
 
 class SearchHistorySerializer(serializers.ModelSerializer):
+    """Serializer for search history."""
+
     class Meta:
         model = SearchHistory
         fields = ['id', 'query', 'search_count', 'last_searched_at', 'created_at']
         read_only_fields = ['id', 'search_count', 'last_searched_at', 'created_at']
 
 
-
 class ViewHistorySerializer(serializers.ModelSerializer):
+    """Serializer for listing view history."""
     listing_title = serializers.CharField(source='listing.estate.title', read_only=True)
     user_email = serializers.EmailField(source='user.email', read_only=True)
 

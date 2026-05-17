@@ -29,17 +29,17 @@ class ReviewListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = Review.objects.select_related('listing', 'listing__estate', 'listing__estate__owner', 'author')
 
-        # Фильтрация по объекту
+        # Filter by object
         listing_id = self.request.query_params.get('listing_id')
         if listing_id:
             queryset = queryset.filter(listing_id=listing_id)
 
-        # Фильтрация по автору
+        # Filter by author
         author_id = self.request.query_params.get('author_id')
         if author_id:
             queryset = queryset.filter(author_id=author_id)
 
-        # Фильтрация по рейтингу
+        # Filter by rating
         min_rating = self.request.query_params.get('min_rating')
         max_rating = self.request.query_params.get('max_rating')
         if min_rating:
@@ -69,15 +69,15 @@ class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
         return ReviewDetailSerializer
 
     def perform_update(self, serializer):
-        # Только автор может редактировать свой отзыв
+        # Only the author can edit their review
         if serializer.instance.author != self.request.user and not self.request.user.is_staff:
-            raise PermissionDenied("Вы можете редактировать только свои отзывы")
+            raise PermissionDenied("You can only edit your own reviews")
         serializer.save()
 
     def perform_destroy(self, instance):
-        # Только автор может удалить свой отзыв
+        # Only the author can delete their review
         if instance.author != self.request.user and not self.request.user.is_staff:
-            raise PermissionDenied("Вы можете удалять только свои отзывы")
+            raise PermissionDenied("You can only delete your own reviews")
         instance.delete()
 
 

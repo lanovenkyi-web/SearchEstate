@@ -24,6 +24,10 @@ def get_jwt_tokens(user):
 
 
 class UserRegistrationView(generics.CreateAPIView):
+    """View for registering a new user.
+    
+    Available without authentication. Returns the created user and JWT tokens.
+    """
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
@@ -87,10 +91,17 @@ def logout_view(request):
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
+    """View for viewing and updating user profile.
+    
+    Requires authentication. Uses different serializers for reading and updating.
+    """
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
+        """Returns the current authenticated user.
+
+        """
         return self.request.user
 
     def get_serializer_class(self):

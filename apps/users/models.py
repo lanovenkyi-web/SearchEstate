@@ -6,6 +6,7 @@ from django.db import models
 
 
 class UserManager(BaseUserManager):
+    """Manager for user management."""
 
     def create_user(self, email, password=None, role='tenant', **extra_fields):
         if not email:
@@ -24,7 +25,14 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    """User model with custom authentication system.
+    
+    Uses email as the primary field for login.
+    Supports three roles: administrator, landlord, tenant.
+    """
+
     class Role(models.TextChoices):
+        """Варианты ролей пользователя."""
         ADMIN = 'admin', 'Администратор'
         LANDLORD = 'landlord', 'Арендодатель'
         TENANT = 'tenant', 'Арендатор'

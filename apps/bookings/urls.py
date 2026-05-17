@@ -2,17 +2,17 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Основные CRUD операции
+    # Basic CRUD operations
     path('', views.BookingListCreateView.as_view(), name='booking-list-create'),
 
-    # Персональные бронирования
+    # Personal bookings
     path('my/', views.my_bookings_view, name='my-bookings'),
     path('owner/', views.owner_bookings_view, name='owner-bookings'),
 
-    # Детальное бронирование
+    # Detailed booking
     path('<int:pk>/', views.BookingDetailView.as_view(), name='booking-detail'),
 
-    # Управление статусами
+    # Status management
     path('<int:pk>/confirm/', views.confirm_booking_view, name='confirm-booking'),
     path('<int:pk>/reject/', views.reject_booking_view, name='reject-booking'),
     path('<int:pk>/cancel/', views.cancel_booking_view, name='cancel-booking'),

@@ -7,6 +7,11 @@ from apps.listings.models import Listing
 # OopCompanion:suppressRename
 
 class BookingCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating a booking.
+    
+    Validates user permissions, date validity, and absence of overlaps.
+    """
+
     class Meta:
         model = Booking
         fields = ['id', 'listing', 'start_date', 'end_date']
@@ -18,11 +23,11 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             if not request.user.is_tenant() and not request.user.is_staff:
                 raise serializers.ValidationError("Бронировать жилье может только арендатор")
 
-            # Проверяем, что пользователь не является владельцем объекта
+            # Check that user is not the owner
             if value.estate.owner == request.user:
                 raise serializers.ValidationError("Вы не можете бронировать свои объекты")
 
-            # Проверяем, что объявление активно
+            # Check that the listing is active
             if value.status != Listing.Status.ACTIVE:
                 raise serializers.ValidationError("Можно бронировать только активные объявления")
         return value
@@ -82,13 +87,13 @@ class BookingUpdateSerializer(serializers.ModelSerializer):
         booking = self.instance
 
         if request and hasattr(request, 'user'):
-            # Только владелец может подтверждать или отклонять бронирование
+            # Only owner can confirm or reject booking
             if value in ['confirmed', 'rejected']:
                 if booking.listing.estate.owner != request.user and not request.user.is_staff:
                     raise serializers.ValidationError(
                         "Только владелец объекта может подтвердить или отклонить бронирование")
 
-            # Только арендатор может отменить бронирование
+            # Only tenant can cancel booking
             elif value == 'canceled':
                 if booking.tenant != request.user and not request.user.is_staff:
                     raise serializers.ValidationError("Только арендатор может отменить бронирование")
@@ -96,7 +101,7 @@ class BookingUpdateSerializer(serializers.ModelSerializer):
                 if booking.start_date <= timezone.localdate():
                     raise serializers.ValidationError("Бронирование можно отменить только до даты начала")
 
-                # Нельзя отменить подтвержденное бронирование
+                # Cannot cancel confirmed booking
                 if booking.status == 'confirmed':
                     raise serializers.ValidationError("Нельзя отменить подтвержденное бронирование")
 

@@ -7,25 +7,34 @@ from .models import User
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
+    """Serializer for registering a new user.
+    
+    Allows user to choose tenant or landlord role during registration.
+    Administrator role is not available for selection.
+    """
     name = serializers.CharField(max_length=150)
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
+    role = serializers.ChoiceField(choices=[User.Role.TENANT, User.Role.LANDLORD])
 
     class Meta:
         model = User
         fields = ['name', 'email', 'password', 'password_confirm', 'role', 'phone_number', 'bio']
 
     def validate_email(self, value):
+
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Пользователь с таким email уже существует")
         return value
 
     def validate(self, attrs):
+
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError("Пароли не совпадают")
         return attrs
 
     def create(self, validated_data):
+
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
         user = User.objects.create_user(password=password, **validated_data)
@@ -33,10 +42,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
+    """Serializer for user login."""
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
+
         email = attrs.get('email')
         password = attrs.get('password')
 
@@ -53,6 +64,7 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for user profile."""
     role_display = serializers.CharField(source='get_role_display', read_only=True)
 
     class Meta:
@@ -62,6 +74,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating user profile.
+    
+    Allows changing name, phone number, and bio.
+    """
+
     class Meta:
         model = User
         fields = ['name', 'phone_number', 'bio']

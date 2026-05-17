@@ -18,6 +18,10 @@ from .filters import ListingFilter
 
 
 class ListingListCreateView(generics.ListCreateAPIView):
+    """
+    GET: Returns a list of listings with filtering and search.
+    POST: Creates a new listing (only for authenticated users).
+    """
     queryset = Listing.objects.select_related('estate', 'estate__owner')
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ListingFilter
@@ -154,11 +158,11 @@ def toggle_listing_status_view(request, pk):
     try:
         listing = Listing.objects.get(pk=pk)
     except Listing.DoesNotExist:
-        return Response({'error': 'Объявление не найдено'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if listing.estate.owner != request.user and not request.user.is_staff:
         return Response(
-            {'error': 'У вас нет прав для изменения этого объявления'},
+            {'error': 'You do not have permission to modify this listing'},
             status=status.HTTP_403_FORBIDDEN
         )
 
@@ -168,7 +172,7 @@ def toggle_listing_status_view(request, pk):
         listing.status = Listing.Status.ACTIVE
     else:
         return Response(
-            {'error': 'Нельзя изменить статус забронированного объявления'},
+            {'error': 'Cannot change the status of a booked listing'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -179,11 +183,11 @@ def toggle_listing_status_view(request, pk):
 
 @extend_schema(
     summary="Поиск объявлений",
-    description="Ищет объявления по заголовку, описанию, городу или району.",
+    description="Searches listings by title, description, city, or district.",
     parameters=[
         OpenApiParameter(
             name='q',
-            description='Текст для поиска (мин. 1 символ)',
+            description='Search text (min. 1 character)',
             required=True,
             type=str
         ),
@@ -203,7 +207,7 @@ def search_listings_view(request):
 
     if not query:
         return Response(
-            {'error': 'Параметр поиска обязателен'},
+            {'error': 'Search parameter is required'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -219,7 +223,7 @@ def search_listings_view(request):
 
     serializer = ListingListSerializer(listings_query, many=True)
 
-    # Сохраняем историю поиска
+    # Save search history
     if request.user.is_authenticated:
         search_history, created = SearchHistory.objects.get_or_create(
             user=request.user,
@@ -229,7 +233,7 @@ def search_listings_view(request):
             search_history.search_count += 1
             search_history.save()
     else:
-        # Для анонимных пользователей сохраняем без привязки к пользователю
+        # For anonymous users, save without linking to user
         search_history, created = SearchHistory.objects.get_or_create(
             user=None,
             query=query
@@ -283,7 +287,7 @@ def my_view_history_view(request):
 def listing_view_history_view(request, pk):
     if not request.user.is_landlord() and not request.user.is_staff:
         return Response(
-            {'error': 'У вас нет прав для просмотра истории'},
+            {'error': 'You do not have permission to view history'},
             status=status.HTTP_403_FORBIDDEN
         )
 

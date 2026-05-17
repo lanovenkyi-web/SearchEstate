@@ -8,7 +8,7 @@ from rest_framework.permissions import AllowAny
 
 # OopCompanion:suppressRename
 
-# Swagger без аутентификации
+# Swagger without authentication
 class SpectacularAPIViewWithAuth(SpectacularAPIView):
     permission_classes = [AllowAny]
 
@@ -18,13 +18,13 @@ class SpectacularSwaggerViewWithAuth(SpectacularSwaggerView):
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # API эндпоинты
+    # API endpoints
     path('api/users/', include(('apps.users.urls', 'users'), namespace='users')),
     path('api/listings/', include(('apps.listings.urls', 'listings'), namespace='listings')),
     path('api/bookings/', include(('apps.bookings.urls', 'bookings'), namespace='bookings')),
     path('api/reviews/', include(('apps.reviews.urls', 'reviews'), namespace='reviews')),
     path('api/schema/', SpectacularAPIViewWithAuth.as_view(), name='schema'),
-    # Сама страница Swagger:
+    # The Swagger page itself:
     path('api/docs/', SpectacularSwaggerViewWithAuth.as_view(url_name='schema'), name='swagger-ui'),
 ]
 

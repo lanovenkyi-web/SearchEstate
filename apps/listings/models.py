@@ -10,6 +10,11 @@ USER_MODEL = get_user_model()
 #======================================================================================================================
 
 class Estate(models.Model):
+    """Real estate property model.
+    
+    Contains main information about the property: title, description,
+    price, number of rooms, housing type, location.
+    """
 
     HOUSING_TYPES = [
         ('apartment', 'Квартира'),
@@ -56,9 +61,15 @@ class Estate(models.Model):
 #======================================================================================================================
 
 class Listing(models.Model):
+    """Real estate listing model.
+    
+    Links a property with its status and metadata.
+    Supports three statuses: active, booked, archived.
+    """
 
 
     class Status(models.TextChoices):
+        """Варианты статуса объявления."""
         ACTIVE = 'active', 'Активно'
         BOOKED = 'booked', 'Забронировано'
         ARCHIVED = 'archived', 'Архивировано'
@@ -90,6 +101,11 @@ class Listing(models.Model):
         return f"Объявление: {self.estate.title} [{self.get_status_display()}]"
 
 class SearchHistory(models.Model):
+    """Search history model.
+    
+    Saves user search queries for popularity analysis.
+    Supports both authenticated and anonymous users.
+    """
     user = models.ForeignKey(
         USER_MODEL,
         on_delete=models.CASCADE,
@@ -111,6 +127,11 @@ class SearchHistory(models.Model):
         return f"{self.query} ({self.search_count})"
 
 class ViewHistory(models.Model):
+    """View history model.
+    
+    Saves detailed information about who viewed which listing and when.
+    Supports both authenticated and anonymous users.
+    """
     listing = models.ForeignKey(
         Listing,
         on_delete=models.CASCADE,

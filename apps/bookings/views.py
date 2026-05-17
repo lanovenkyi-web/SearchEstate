@@ -31,13 +31,13 @@ class BookingListCreateView(generics.ListCreateAPIView):
         queryset = Booking.objects.select_related('listing', 'listing__estate', 'listing__estate__owner', 'tenant')
 
         if user.is_staff:
-            # Администратор видит все бронирования
+            # Admin sees all bookings
             return queryset
         elif user.is_landlord():
-            # Владелец видит бронирования своих объектов
+            # Owner sees bookings for their properties
             return queryset.filter(listing__estate__owner=user)
         else:
-            # Арендатор видит свои бронирования
+            # Tenant sees their own bookings
             return queryset.filter(tenant=user)
 
     def get_serializer_class(self):
@@ -71,18 +71,28 @@ class BookingDetailView(generics.RetrieveUpdateDestroyAPIView):
     def perform_destroy(self, instance):
         user = self.request.user
 
-        # Только арендатор может отменить свое бронирование
+        # Only tenant can cancel their own booking
         if instance.tenant != user and not user.is_staff:
             raise exceptions.PermissionDenied("Вы можете отменить только свои бронирования")
 
-        # Нельзя удалить подтвержденное бронирование
+        # Cannot delete confirmed booking
         if instance.status == 'confirmed':
             raise exceptions.PermissionDenied("Нельзя удалить подтвержденное бронирование")
 
         if instance.start_date <= timezone.localdate():
             raise exceptions.PermissionDenied("Бронирование можно отменить только до даты начала")
 
+        listing = instance.listing
         instance.delete()
+
+        other_confirmed_bookings = Booking.objects.filter(
+            listing=listing,
+            status='confirmed'
+        )
+
+        if not other_confirmed_bookings.exists():
+            listing.status = Listing.Status.ACTIVE
+            listing.save()
 
 
 @extend_schema(responses=BookingListSerializer(many=True))
@@ -132,7 +142,7 @@ def confirm_booking_view(request, pk):
     except Booking.DoesNotExist:
         return Response({'error': 'Бронирование не найдено'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Проверка прав (только владелец объекта может подтвердить)
+    # Permission check (only property owner can confirm)
     if booking.listing.estate.owner != request.user and not request.user.is_staff:
         return Response(
             {'error': 'У вас нет прав для подтверждения этого бронирования'},
@@ -148,7 +158,7 @@ def confirm_booking_view(request, pk):
     booking.status = 'confirmed'
     booking.save()
 
-    # Обновляем статус объявления
+    # Update listing status
     booking.listing.status = Listing.Status.BOOKED
     booking.listing.save()
 
@@ -165,7 +175,7 @@ def reject_booking_view(request, pk):
     except Booking.DoesNotExist:
         return Response({'error': 'Бронирование не найдено'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Проверка прав (только владелец объекта может отклонить)
+    # Permission check (only property owner can reject)
     if booking.listing.estate.owner != request.user and not request.user.is_staff:
         return Response(
             {'error': 'У вас нет прав для отклонения этого бронирования'},
@@ -181,6 +191,15 @@ def reject_booking_view(request, pk):
     booking.status = 'rejected'
     booking.save()
 
+    other_confirmed_bookings = Booking.objects.filter(
+        listing=booking.listing,
+        status='confirmed'
+    ).exclude(pk=booking.pk)
+
+    if not other_confirmed_bookings.exists():
+        booking.listing.status = Listing.Status.ACTIVE
+        booking.listing.save()
+
     serializer = BookingDetailSerializer(booking)
     return Response(serializer.data)
 
@@ -194,7 +213,7 @@ def cancel_booking_view(request, pk):
     except Booking.DoesNotExist:
         return Response({'error': 'Бронирование не найдено'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Проверка прав (только арендатор может отменить)
+    # Permission check (only tenant can cancel)
     if booking.tenant != request.user and not request.user.is_staff:
         return Response(
             {'error': 'У вас нет прав для отмены этого бронирования'},
@@ -222,6 +241,14 @@ def cancel_booking_view(request, pk):
     booking.status = 'canceled'
     booking.save()
 
+    other_confirmed_bookings = Booking.objects.filter(
+        listing=booking.listing,
+        status='confirmed'
+    ).exclude(pk=booking.pk)
+
+    if not other_confirmed_bookings.exists():
+        booking.listing.status = Listing.Status.ACTIVE
+        booking.listing.save()
+
     serializer = BookingDetailSerializer(booking)
     return Response(serializer.data)
-

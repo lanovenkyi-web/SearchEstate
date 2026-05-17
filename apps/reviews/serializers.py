@@ -13,11 +13,11 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
     def validate_listing(self, value):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
-            # Проверяем, что пользователь не является владельцем
+            # Check that user is not the owner
             if value.estate.owner == request.user:
                 raise serializers.ValidationError("Вы не можете оставлять отзывы на свои объекты")
 
-            # Проверяем подтвержденное бронирование
+            # Check for confirmed booking
             has_confirmed_booking = Booking.objects.filter(
                 listing=value,
                 tenant=request.user,
@@ -27,7 +27,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
             if not has_confirmed_booking:
                 raise serializers.ValidationError("Вы можете оставить отзыв только после подтвержденного бронирования")
 
-            # Проверяем, что пользователь еще не оставлял отзыв на этот объект
+            # Check that user hasn't already reviewed this property
             existing_review = Review.objects.filter(
                 listing=value,
                 author=request.user
@@ -89,7 +89,7 @@ class ReviewUpdateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
-            # Только автор может редактировать отзыв
+            # Only author can edit their review
             if self.instance.author != request.user and not request.user.is_staff:
                 raise serializers.ValidationError("Только автор может редактировать свой отзыв")
 
